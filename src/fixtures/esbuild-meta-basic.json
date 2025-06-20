@@ -1,0 +1,19 @@
+{
+    "outputs": {
+        "dist/main.js": {
+            "imports": [
+                {"path": "dist/chunk1.js"},
+                {"path": "dist/chunk2.js"}
+            ],
+            "cssBundle": "dist/main.css",
+            "entryPoint": "src/main.ts"
+        },
+        "dist/main.css": {
+            "imports": [
+                {"path": "dist/style1.css"},
+                {"path": "dist/style1.css"}
+            ],
+            "entryPoint": "src/style.css"
+        }
+    }
+}

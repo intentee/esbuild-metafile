@@ -1,0 +1,131 @@
+{
+    "inputs": {
+        "resources/css/_reset.css": {
+            "bytes": 856,
+            "imports": []
+        },
+        "resources/css/_fonts.css": {
+            "bytes": 1465,
+            "imports": [
+                {
+                    "path": "https://fonts/font1.woff2",
+                    "kind": "url-token",
+                    "external": true
+                },
+                {
+                    "path": "https://fonts/font2.woff2",
+                    "kind": "url-token",
+                    "external": true
+                }
+            ]
+        },
+        "resources/css/test.svg": {
+            "bytes": 12,
+            "imports": []
+        },
+        "resources/css/page-common.css": {
+            "bytes": 244,
+            "imports": [
+                {
+                    "path": "resources/css/_reset.css",
+                    "kind": "import-rule",
+                    "original": "./_reset.css"
+                },
+                {
+                    "path": "resources/css/_fonts.css",
+                    "kind": "import-rule",
+                    "original": "./_fonts.css"
+                },
+                {
+                    "path": "resources/css/test.svg",
+                    "kind": "url-token",
+                    "original": "test.svg"
+                }
+            ]
+        }
+    },
+    "outputs": {
+        "static/controller_foo_CTJMZK66.js": {
+            "imports": [
+                {
+                    "path": "https://fonts/font1.woff2",
+                    "kind": "url-token",
+                    "external": true
+                },
+                {
+                    "path": "static/chunk-EMZKCXNJ.js",
+                    "kind": "import-statement"
+                },
+                {
+                    "path": "static/chunk-PI4ZFSEL.js",
+                    "kind": "import-statement"
+                },
+                {
+                    "path": "static/logo_XSTJPNLH.png",
+                    "kind": "file-loader"
+                }
+            ],
+            "exports": ["controller_foo"],
+            "entryPoint": "resources/ts/controller_foo.tsx",
+            "cssBundle": "static/controller_foo_CX2Z63ZH.css"
+        },
+        "static/test_6D5OPEBZ.svg": {
+            "imports": [],
+            "exports": [],
+            "inputs": {
+                "resources/css/test.svg": {
+                    "bytesInOutput": 12
+                }
+            },
+            "bytes": 12
+        },
+        "static/page-common_DO3RNJ3I.css.map": {
+            "imports": [],
+            "exports": [],
+            "inputs": {},
+            "bytes": 4273
+        },
+        "static/page-common_DO3RNJ3I.css": {
+            "imports": [
+                {
+                    "path": "https://fonts/font1.woff2",
+                    "kind": "url-token",
+                    "external": true
+                },
+                {
+                    "path": "https://fonts/font2.woff2",
+                    "kind": "url-token",
+                    "external": true
+                },
+                {
+                    "path": "static/test_6D5OPEBZ.svg",
+                    "kind": "url-token"
+                }
+            ],
+            "entryPoint": "resources/css/page-common.css",
+            "inputs": {
+                "resources/css/_reset.css": {
+                    "bytesInOutput": 704
+                },
+                "resources/css/_fonts.css": {
+                    "bytesInOutput": 717
+                },
+                "resources/css/page-common.css": {
+                    "bytesInOutput": 172
+                }
+            },
+            "bytes": 1647
+        },
+        "static/controller_foo_CX2Z63ZH.css": {
+          "imports": [
+                {
+                    "path": "https://fonts/font3.woff2",
+                    "kind": "url-token",
+                    "external": true
+                }
+          ],
+          "inputs": {},
+          "bytes": 438
+        }
+    }
+}
