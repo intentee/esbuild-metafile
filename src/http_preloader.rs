@@ -81,23 +81,14 @@ impl FromRequest for HttpPreloader {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use anyhow::Result;
 
     use super::*;
-
-    fn get_test_fixture() -> &'static str {
-        include_str!("./fixtures/esbuild-meta-basic.json")
-    }
-
-    fn get_test_metafile() -> Result<Arc<EsbuildMetaFile>> {
-        Ok(Arc::new(EsbuildMetaFile::from_str(get_test_fixture())?))
-    }
+    use crate::test::get_metafile_basic;
 
     #[test]
     fn test_unique_includes_and_preloads() -> Result<()> {
-        let metafile = get_test_metafile()?;
+        let metafile = get_metafile_basic()?;
         let preloader = HttpPreloader::new(metafile);
 
         preloader.register_input("src/main.ts");
@@ -121,7 +112,7 @@ mod tests {
 
     #[test]
     fn test_css_preloads_uniqueness() -> Result<()> {
-        let metafile = get_test_metafile()?;
+        let metafile = get_metafile_basic()?;
         let preloader = HttpPreloader::new(metafile);
 
         preloader.register_input("src/style.css");

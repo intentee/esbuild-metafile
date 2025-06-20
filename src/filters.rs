@@ -2,13 +2,15 @@ use std::fmt::Display;
 use std::io;
 
 use askama::Result;
-use askama::{
-    self,
-};
+use askama::Values;
 
 use super::http_preloader::HttpPreloader;
 
-pub fn asset<TDisplay>(input_path: TDisplay, http_preloader: &HttpPreloader) -> Result<String>
+pub fn asset<TDisplay>(
+    input_path: TDisplay,
+    _values: &dyn Values,
+    http_preloader: &HttpPreloader,
+) -> Result<String>
 where
     TDisplay: Display,
 {
@@ -20,7 +22,11 @@ where
     }
 }
 
-pub fn preload<TDisplay>(preload_path: TDisplay, http_preloader: &HttpPreloader) -> Result<String>
+pub fn preload<TDisplay>(
+    preload_path: TDisplay,
+    _values: &dyn Values,
+    http_preloader: &HttpPreloader,
+) -> Result<String>
 where
     TDisplay: Display,
 {
@@ -32,7 +38,7 @@ where
     }
 }
 
-pub fn render_assets(http_preloader: &HttpPreloader) -> Result<String> {
+pub fn render_assets(http_preloader: &HttpPreloader, _values: &dyn Values) -> Result<String> {
     let mut rendered_assets: String = String::new();
 
     for path in http_preloader.preloads.borrow().iter() {
@@ -44,4 +50,32 @@ pub fn render_assets(http_preloader: &HttpPreloader) -> Result<String> {
     }
 
     Ok(rendered_assets)
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+    use askama::Template;
+
+    use super::*;
+    use crate::filters;
+    use crate::test::get_metafile_fonts;
+
+    #[derive(Template)]
+    #[template(path = "fixtures/template.html")]
+    struct WorkbenchTemplate {
+        preloads: HttpPreloader,
+    }
+
+    #[test]
+    fn test_asset_filter() -> Result<()> {
+        let preloads = HttpPreloader::new(get_metafile_fonts()?);
+        let template = WorkbenchTemplate {
+            preloads,
+        };
+
+        let _ = template.render()?;
+
+        Ok(())
+    }
 }

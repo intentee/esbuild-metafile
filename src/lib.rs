@@ -5,6 +5,9 @@ mod http_preloader;
 pub mod instance;
 mod preloadable_asset;
 
+#[cfg(test)]
+mod test;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::str::FromStr;
@@ -123,18 +126,11 @@ impl FromStr for EsbuildMetaFile {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    fn get_test_fixture() -> &'static str {
-        include_str!("./fixtures/esbuild-meta-fonts.json")
-    }
-
-    fn get_test_metafile() -> Result<EsbuildMetaFile> {
-        EsbuildMetaFile::from_str(get_test_fixture())
-    }
+    use crate::test::get_metafile_fonts;
 
     #[test]
     fn test_find_outputs_for_css_input() -> Result<()> {
-        let metafile = get_test_metafile()?;
+        let metafile = get_metafile_fonts()?;
         let outputs = metafile
             .find_outputs_for_input("resources/css/page-common.css")
             .unwrap();
@@ -147,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_find_outputs_for_tsx_input() -> Result<()> {
-        let metafile = get_test_metafile()?;
+        let metafile = get_metafile_fonts()?;
         let outputs = metafile
             .find_outputs_for_input("resources/ts/controller_foo.tsx")
             .unwrap();
@@ -161,7 +157,7 @@ mod tests {
 
     #[test]
     fn test_get_preloads_for_js() -> Result<()> {
-        let metafile = get_test_metafile()?;
+        let metafile = get_metafile_fonts()?;
         let preloads = metafile.get_preloads("static/controller_foo_CTJMZK66.js");
 
         assert_eq!(preloads.len(), 5);
@@ -176,7 +172,7 @@ mod tests {
 
     #[test]
     fn test_get_preloads_for_css() -> Result<()> {
-        let metafile = get_test_metafile()?;
+        let metafile = get_metafile_fonts()?;
         let preloads = metafile.get_preloads("static/page-common_DO3RNJ3I.css");
 
         assert_eq!(preloads.len(), 3);
