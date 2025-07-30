@@ -26,6 +26,14 @@ impl PreloadableAsset {
             _ => PreloadableAsset::Fetch(path),
         }
     }
+
+    fn prefix_path(&self, path: &str) -> String {
+        if path.starts_with("http://") || path.starts_with("https://") {
+            path.to_string()
+        } else {
+            format!("/{path}")
+        }
+    }
 }
 
 impl Display for PreloadableAsset {
@@ -33,23 +41,58 @@ impl Display for PreloadableAsset {
         match self {
             PreloadableAsset::Fetch(path) => writeln!(
                 formatter,
-                "<link rel=\"preload\" href=\"/{path}\" as=\"fetch\">"
+                "<link rel=\"preload\" href=\"{}\" as=\"fetch\">",
+                self.prefix_path(path),
             ),
             PreloadableAsset::Font(path) => writeln!(
                 formatter,
-                "<link rel=\"preload\" href=\"/{path}\" as=\"font\" crossorigin>"
+                "<link rel=\"preload\" href=\"{}\" as=\"font\" crossorigin>",
+                self.prefix_path(path),
             ),
             PreloadableAsset::Image(path) => writeln!(
                 formatter,
-                "<link rel=\"preload\" href=\"/{path}\" as=\"image\">"
+                "<link rel=\"preload\" href=\"{}\" as=\"image\">",
+                self.prefix_path(path),
             ),
-            PreloadableAsset::Module(path) => {
-                writeln!(formatter, "<link rel=\"modulepreload\" href=\"/{path}\">")
-            }
+            PreloadableAsset::Module(path) => writeln!(
+                formatter,
+                "<link rel=\"modulepreload\" href=\"{}\">",
+                self.prefix_path(path),
+            ),
             PreloadableAsset::Stylesheet(path) => writeln!(
                 formatter,
-                "<link rel=\"preload\" href=\"/{path}\" as=\"style\">"
+                "<link rel=\"preload\" href=\"{}\" as=\"style\">",
+                self.prefix_path(path),
             ),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use anyhow::Result;
+
+    use super::*;
+
+    #[test]
+    fn test_local_font_formatting() -> Result<()> {
+        let font = PreloadableAsset::Font("fonts/Roboto.woff2".to_string());
+        let expected =
+            "<link rel=\"preload\" href=\"/fonts/Roboto.woff2\" as=\"font\" crossorigin>\n";
+
+        assert_eq!(format!("{font}"), expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_url_font_formatting() -> Result<()> {
+        let font =
+            PreloadableAsset::Font("https://fonts.somewhere.com/fonts/Roboto.woff2".to_string());
+        let expected = "<link rel=\"preload\" href=\"https://fonts.somewhere.com/fonts/Roboto.woff2\" as=\"font\" crossorigin>\n";
+
+        assert_eq!(format!("{font}"), expected);
+
+        Ok(())
     }
 }
