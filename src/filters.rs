@@ -41,11 +41,11 @@ where
 pub fn render_assets(http_preloader: &HttpPreloader, _values: &dyn Values) -> Result<String> {
     let mut rendered_assets: String = String::new();
 
-    for path in http_preloader.preloads.borrow().iter() {
+    for path in http_preloader.preloads.iter() {
         rendered_assets.push_str(&path.to_string());
     }
 
-    for path in http_preloader.includes.borrow().iter() {
+    for path in http_preloader.includes.iter() {
         rendered_assets.push_str(&path.to_string());
     }
 

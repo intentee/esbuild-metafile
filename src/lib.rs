@@ -58,6 +58,15 @@ impl EsbuildMetaFile {
     }
 }
 
+impl Default for EsbuildMetaFile {
+    fn default() -> Self {
+        Self {
+            input_to_outputs: Arc::new(HashMap::new()),
+            output_to_preloads: Arc::new(HashMap::new()),
+        }
+    }
+}
+
 impl FromStr for EsbuildMetaFile {
     type Err = anyhow::Error;
 

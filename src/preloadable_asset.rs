@@ -4,7 +4,7 @@ use std::fmt::Formatter;
 
 use crate::filesystem::get_file_extension;
 
-#[derive(Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum PreloadableAsset {
     Fetch(String),
     Font(String),
