@@ -5,6 +5,7 @@ use askama::Result;
 use askama::Values;
 
 use super::http_preloader::HttpPreloader;
+use super::path_renderer::PathRenderer;
 
 pub fn asset<TDisplay>(
     input_path: TDisplay,
@@ -39,14 +40,15 @@ where
 }
 
 pub fn render_assets(http_preloader: &HttpPreloader, _values: &dyn Values) -> Result<String> {
+    let path_renderer = PathRenderer {};
     let mut rendered_assets: String = String::new();
 
     for path in http_preloader.preloads.iter() {
-        rendered_assets.push_str(&path.to_string());
+        rendered_assets.push_str(&path.render(&path_renderer));
     }
 
     for path in http_preloader.includes.iter() {
-        rendered_assets.push_str(&path.to_string());
+        rendered_assets.push_str(&path.render(&path_renderer));
     }
 
     Ok(rendered_assets)

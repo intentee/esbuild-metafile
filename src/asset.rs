@@ -1,8 +1,5 @@
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
-
 use crate::filesystem::get_file_extension;
+use crate::renders_path::RendersPath;
 
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Asset {
@@ -19,19 +16,18 @@ impl Asset {
             _ => Asset::Unknown(path),
         }
     }
-}
 
-impl Display for Asset {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+    pub fn render<TRendersPath: RendersPath>(&self, renders_path: &TRendersPath) -> String {
         match self {
-            Asset::Script(path) => writeln!(
-                formatter,
-                "<script async src=\"/{path}\" type=\"module\"></script>"
+            Asset::Script(path) => format!(
+                "<script async src=\"/{}\" type=\"module\"></script>",
+                renders_path.render_path(path)
             ),
-            Asset::Stylesheet(path) => {
-                writeln!(formatter, "<link rel=\"stylesheet\" href=\"/{path}\">")
-            }
-            Asset::Unknown(_) => write!(formatter, ""),
+            Asset::Stylesheet(path) => format!(
+                "<link rel=\"stylesheet\" href=\"/{}\">",
+                renders_path.render_path(path)
+            ),
+            Asset::Unknown(_) => String::new(),
         }
     }
 }

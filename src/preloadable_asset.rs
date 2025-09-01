@@ -1,8 +1,5 @@
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
-
 use crate::filesystem::get_file_extension;
+use crate::renders_path::RendersPath;
 
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum PreloadableAsset {
@@ -27,42 +24,27 @@ impl PreloadableAsset {
         }
     }
 
-    fn prefix_path(&self, path: &str) -> String {
-        if path.starts_with("http://") || path.starts_with("https://") {
-            path.to_string()
-        } else {
-            format!("/{path}")
-        }
-    }
-}
-
-impl Display for PreloadableAsset {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+    pub fn render<TRendersPath: RendersPath>(&self, renders_path: &TRendersPath) -> String {
         match self {
-            PreloadableAsset::Fetch(path) => writeln!(
-                formatter,
+            PreloadableAsset::Fetch(path) => format!(
                 "<link rel=\"preload\" href=\"{}\" as=\"fetch\">",
-                self.prefix_path(path),
+                renders_path.render_path(path),
             ),
-            PreloadableAsset::Font(path) => writeln!(
-                formatter,
+            PreloadableAsset::Font(path) => format!(
                 "<link rel=\"preload\" href=\"{}\" as=\"font\" crossorigin>",
-                self.prefix_path(path),
+                renders_path.render_path(path),
             ),
-            PreloadableAsset::Image(path) => writeln!(
-                formatter,
+            PreloadableAsset::Image(path) => format!(
                 "<link rel=\"preload\" href=\"{}\" as=\"image\">",
-                self.prefix_path(path),
+                renders_path.render_path(path),
             ),
-            PreloadableAsset::Module(path) => writeln!(
-                formatter,
+            PreloadableAsset::Module(path) => format!(
                 "<link rel=\"modulepreload\" href=\"{}\">",
-                self.prefix_path(path),
+                renders_path.render_path(path),
             ),
-            PreloadableAsset::Stylesheet(path) => writeln!(
-                formatter,
+            PreloadableAsset::Stylesheet(path) => format!(
                 "<link rel=\"preload\" href=\"{}\" as=\"style\">",
-                self.prefix_path(path),
+                renders_path.render_path(path),
             ),
         }
     }
@@ -73,10 +55,12 @@ mod tests {
     use anyhow::Result;
 
     use super::*;
+    use crate::path_renderer::PathRenderer;
 
     #[test]
     fn test_local_font_formatting() -> Result<()> {
-        let font = PreloadableAsset::Font("fonts/Roboto.woff2".to_string());
+        let path_renderer = PathRenderer {};
+        let font = PreloadableAsset::Font("fonts/Roboto.woff2".to_string()).render(&path_renderer);
         let expected =
             "<link rel=\"preload\" href=\"/fonts/Roboto.woff2\" as=\"font\" crossorigin>\n";
 
@@ -87,8 +71,10 @@ mod tests {
 
     #[test]
     fn test_url_font_formatting() -> Result<()> {
+        let path_renderer = PathRenderer {};
         let font =
-            PreloadableAsset::Font("https://fonts.somewhere.com/fonts/Roboto.woff2".to_string());
+            PreloadableAsset::Font("https://fonts.somewhere.com/fonts/Roboto.woff2".to_string())
+                .render(&path_renderer);
         let expected = "<link rel=\"preload\" href=\"https://fonts.somewhere.com/fonts/Roboto.woff2\" as=\"font\" crossorigin>\n";
 
         assert_eq!(format!("{font}"), expected);

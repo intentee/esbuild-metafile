@@ -3,7 +3,9 @@ mod filesystem;
 pub mod filters;
 pub mod http_preloader;
 pub mod instance;
+pub mod path_renderer;
 pub mod preloadable_asset;
+pub mod renders_path;
 
 #[cfg(test)]
 mod test;
