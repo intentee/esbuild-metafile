@@ -117,9 +117,6 @@ impl FromStr for EsbuildMetaFile {
             } else {
                 // Static files use the same extension as the input file, and no entry point
                 for input_path in output.inputs.keys() {
-                    println!(
-                        "output path: {output_path}, output: {output:?}, input path: {input_path}"
-                    );
                     static_paths
                         .entry(input_path.to_string())
                         .or_default()
