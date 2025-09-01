@@ -1,0 +1,27 @@
+{
+    "outputs": {
+        "dist/image_123.svg": {
+            "imports": [],
+            "exports": [],
+            "inputs": {
+                "resources/images/image.svg": {
+                    "bytesInOutput": 123
+                }
+            }
+        },
+        "dist/image_123.js": {
+            "imports": [
+                {
+                    "path": "dist/image_123.svg",
+                    "kind": "file-loader"
+                }
+            ],
+            "entryPoint": "resources/images/image.svg",
+            "inputs": {
+                "resources/images/image.svg": {
+                    "bytesInOutput": 123
+                }
+            }
+        }
+    }
+}

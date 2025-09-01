@@ -1,9 +1,9 @@
-mod asset;
+pub mod asset;
 mod filesystem;
 pub mod filters;
-mod http_preloader;
+pub mod http_preloader;
 pub mod instance;
-mod preloadable_asset;
+pub mod preloadable_asset;
 
 #[cfg(test)]
 mod test;
@@ -22,11 +22,8 @@ struct EsbuildMetaFileLoader {
     outputs: HashMap<String, Output>,
 }
 
-#[derive(Clone, Debug)]
-pub struct EsbuildMetaFile {
-    input_to_outputs: Arc<HashMap<String, Vec<String>>>,
-    output_to_preloads: Arc<HashMap<String, Vec<String>>>,
-}
+#[derive(Clone, Debug, Deserialize)]
+pub struct InputInOutput {}
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Output {
@@ -35,6 +32,8 @@ pub struct Output {
     css_bundle: Option<String>,
     #[serde(rename = "entryPoint")]
     entry_point: Option<String>,
+    #[serde(default)]
+    inputs: HashMap<String, InputInOutput>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -42,10 +41,18 @@ pub struct Import {
     path: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct InputInOutput {}
+#[derive(Clone, Debug, Default)]
+pub struct EsbuildMetaFile {
+    input_to_outputs: Arc<HashMap<String, Vec<String>>>,
+    output_to_preloads: Arc<HashMap<String, Vec<String>>>,
+    static_paths: Arc<HashMap<String, Vec<String>>>,
+}
 
 impl EsbuildMetaFile {
+    pub fn find_static_paths_for_input(&self, input_path: &str) -> Option<Vec<String>> {
+        self.static_paths.get(input_path).cloned()
+    }
+
     pub fn find_outputs_for_input(&self, input_path: &str) -> Option<Vec<String>> {
         self.input_to_outputs.get(input_path).cloned()
     }
@@ -58,15 +65,6 @@ impl EsbuildMetaFile {
     }
 }
 
-impl Default for EsbuildMetaFile {
-    fn default() -> Self {
-        Self {
-            input_to_outputs: Arc::new(HashMap::new()),
-            output_to_preloads: Arc::new(HashMap::new()),
-        }
-    }
-}
-
 impl FromStr for EsbuildMetaFile {
     type Err = anyhow::Error;
 
@@ -74,6 +72,7 @@ impl FromStr for EsbuildMetaFile {
         let metafile: EsbuildMetaFileLoader = serde_json::from_str(json)?;
         let mut input_to_outputs: HashMap<String, Vec<String>> = HashMap::new();
         let mut output_to_preloads: HashMap<String, Vec<String>> = HashMap::new();
+        let mut static_paths: HashMap<String, Vec<String>> = HashMap::new();
 
         let mut remaining_outputs: HashSet<String> = metafile
             .outputs
@@ -115,6 +114,17 @@ impl FromStr for EsbuildMetaFile {
                     remaining_outputs.remove(&import.path);
                     preloads.push(import.path.clone());
                 }
+            } else {
+                // Static files use the same extension as the input file, and no entry point
+                for input_path in output.inputs.keys() {
+                    println!(
+                        "output path: {output_path}, output: {output:?}, input path: {input_path}"
+                    );
+                    static_paths
+                        .entry(input_path.to_string())
+                        .or_default()
+                        .push(output_path.to_string());
+                }
             }
         }
 
@@ -128,6 +138,7 @@ impl FromStr for EsbuildMetaFile {
         Ok(Self {
             input_to_outputs: Arc::new(input_to_outputs),
             output_to_preloads: Arc::new(output_to_preloads),
+            static_paths: Arc::new(static_paths),
         })
     }
 }
@@ -136,6 +147,7 @@ impl FromStr for EsbuildMetaFile {
 mod tests {
     use super::*;
     use crate::test::get_metafile_fonts;
+    use crate::test::get_metafile_svg;
 
     #[test]
     fn test_find_outputs_for_css_input() -> Result<()> {
@@ -188,6 +200,19 @@ mod tests {
         assert!(preloads.contains(&"https://fonts/font1.woff2".to_string()));
         assert!(preloads.contains(&"https://fonts/font2.woff2".to_string()));
         assert!(preloads.contains(&"static/test_6D5OPEBZ.svg".to_string()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_file_path() -> Result<()> {
+        let metafile = get_metafile_svg()?;
+        let outputs = metafile
+            .find_static_paths_for_input("resources/images/image.svg")
+            .unwrap();
+
+        assert_eq!(outputs.len(), 1);
+        assert!(outputs.contains(&"dist/image_123.svg".to_string()));
 
         Ok(())
     }

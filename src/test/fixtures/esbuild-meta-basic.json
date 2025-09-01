@@ -6,14 +6,16 @@
                 {"path": "dist/chunk2.js"}
             ],
             "cssBundle": "dist/main.css",
-            "entryPoint": "src/main.ts"
+            "entryPoint": "src/main.ts",
+            "inputs": {}
         },
         "dist/main.css": {
             "imports": [
                 {"path": "dist/style1.css"},
                 {"path": "dist/style1.css"}
             ],
-            "entryPoint": "src/style.css"
+            "entryPoint": "src/style.css",
+            "inputs": {}
         }
     }
 }
