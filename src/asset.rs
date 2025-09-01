@@ -20,11 +20,11 @@ impl Asset {
     pub fn render<TRendersPath: RendersPath>(&self, renders_path: &TRendersPath) -> String {
         match self {
             Asset::Script(path) => format!(
-                "<script async src=\"/{}\" type=\"module\"></script>",
+                "<script async src=\"{}\" type=\"module\"></script>",
                 renders_path.render_path(path)
             ),
             Asset::Stylesheet(path) => format!(
-                "<link rel=\"stylesheet\" href=\"/{}\">",
+                "<link rel=\"stylesheet\" href=\"{}\">",
                 renders_path.render_path(path)
             ),
             Asset::Unknown(_) => String::new(),

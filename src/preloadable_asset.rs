@@ -62,7 +62,7 @@ mod tests {
         let path_renderer = PathRenderer {};
         let font = PreloadableAsset::Font("fonts/Roboto.woff2".to_string()).render(&path_renderer);
         let expected =
-            "<link rel=\"preload\" href=\"/fonts/Roboto.woff2\" as=\"font\" crossorigin>\n";
+            "<link rel=\"preload\" href=\"/fonts/Roboto.woff2\" as=\"font\" crossorigin>";
 
         assert_eq!(format!("{font}"), expected);
 
@@ -75,7 +75,7 @@ mod tests {
         let font =
             PreloadableAsset::Font("https://fonts.somewhere.com/fonts/Roboto.woff2".to_string())
                 .render(&path_renderer);
-        let expected = "<link rel=\"preload\" href=\"https://fonts.somewhere.com/fonts/Roboto.woff2\" as=\"font\" crossorigin>\n";
+        let expected = "<link rel=\"preload\" href=\"https://fonts.somewhere.com/fonts/Roboto.woff2\" as=\"font\" crossorigin>";
 
         assert_eq!(format!("{font}"), expected);
 
