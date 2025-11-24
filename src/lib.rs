@@ -46,6 +46,7 @@ pub struct Import {
 #[derive(Clone, Debug, Default)]
 pub struct EsbuildMetaFile {
     input_to_outputs: Arc<HashMap<String, Vec<String>>>,
+    output_paths: Arc<HashSet<String>>,
     output_to_preloads: Arc<HashMap<String, Vec<String>>>,
     static_paths: Arc<HashMap<String, Vec<String>>>,
 }
@@ -57,6 +58,10 @@ impl EsbuildMetaFile {
 
     pub fn find_outputs_for_input(&self, input_path: &str) -> Option<Vec<String>> {
         self.input_to_outputs.get(input_path).cloned()
+    }
+
+    pub fn get_output_paths(&self) -> Arc<HashSet<String>> {
+        self.output_paths.clone()
     }
 
     pub fn get_preloads(&self, output_path: &str) -> Vec<String> {
@@ -136,6 +141,13 @@ impl FromStr for EsbuildMetaFile {
 
         Ok(Self {
             input_to_outputs: Arc::new(input_to_outputs),
+            output_paths: Arc::new(
+                metafile
+                    .outputs
+                    .keys()
+                    .map(|key| key.to_string())
+                    .collect::<HashSet<String>>(),
+            ),
             output_to_preloads: Arc::new(output_to_preloads),
             static_paths: Arc::new(static_paths),
         })
@@ -145,8 +157,21 @@ impl FromStr for EsbuildMetaFile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test::get_metafile_basic;
     use crate::test::get_metafile_fonts;
     use crate::test::get_metafile_svg;
+
+    #[test]
+    fn test_get_output_paths() -> Result<()> {
+        let metafile = get_metafile_basic()?;
+        let outputs = metafile.get_output_paths();
+
+        assert_eq!(outputs.len(), 2);
+        assert!(outputs.contains(&"dist/main.css".to_string()));
+        assert!(outputs.contains(&"dist/main.js".to_string()));
+
+        Ok(())
+    }
 
     #[test]
     fn test_find_outputs_for_css_input() -> Result<()> {
