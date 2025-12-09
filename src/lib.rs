@@ -13,7 +13,6 @@ mod test;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::str::FromStr;
-use std::sync::Arc;
 
 use anyhow::Result;
 pub use http_preloader::HttpPreloader;
@@ -24,10 +23,10 @@ struct EsbuildMetaFileLoader {
     outputs: HashMap<String, Output>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct InputInOutput {}
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Output {
     imports: Vec<Import>,
     #[serde(rename = "cssBundle")]
@@ -38,17 +37,17 @@ pub struct Output {
     inputs: HashMap<String, InputInOutput>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Import {
     path: String,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct EsbuildMetaFile {
-    input_to_outputs: Arc<HashMap<String, Vec<String>>>,
-    output_paths: Arc<HashSet<String>>,
-    output_to_preloads: Arc<HashMap<String, Vec<String>>>,
-    static_paths: Arc<HashMap<String, Vec<String>>>,
+    input_to_outputs: HashMap<String, Vec<String>>,
+    output_paths: HashSet<String>,
+    output_to_preloads: HashMap<String, Vec<String>>,
+    static_paths: HashMap<String, Vec<String>>,
 }
 
 impl EsbuildMetaFile {
@@ -60,7 +59,7 @@ impl EsbuildMetaFile {
         self.input_to_outputs.get(input_path).cloned()
     }
 
-    pub fn get_output_paths(&self) -> Arc<HashSet<String>> {
+    pub fn get_output_paths(&self) -> HashSet<String> {
         self.output_paths.clone()
     }
 
@@ -140,16 +139,14 @@ impl FromStr for EsbuildMetaFile {
         }
 
         Ok(Self {
-            input_to_outputs: Arc::new(input_to_outputs),
-            output_paths: Arc::new(
-                metafile
-                    .outputs
-                    .keys()
-                    .map(|key| key.to_string())
-                    .collect::<HashSet<String>>(),
-            ),
-            output_to_preloads: Arc::new(output_to_preloads),
-            static_paths: Arc::new(static_paths),
+            input_to_outputs,
+            output_paths: metafile
+                .outputs
+                .keys()
+                .map(|key| key.to_string())
+                .collect::<HashSet<String>>(),
+            output_to_preloads,
+            static_paths,
         })
     }
 }
@@ -167,8 +164,8 @@ mod tests {
         let outputs = metafile.get_output_paths();
 
         assert_eq!(outputs.len(), 2);
-        assert!(outputs.contains(&"dist/main.css".to_string()));
-        assert!(outputs.contains(&"dist/main.js".to_string()));
+        assert!(outputs.contains("dist/main.css"));
+        assert!(outputs.contains("dist/main.js"));
 
         Ok(())
     }

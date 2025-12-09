@@ -1,15 +1,21 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
+use anyhow::Result;
 use once_cell::sync::OnceCell;
 
 use super::EsbuildMetaFile;
 
 pub static INSTANCE: OnceCell<Arc<EsbuildMetaFile>> = OnceCell::new();
 
+pub fn create_from_contents(esbuild_meta_contents: &str) -> Result<EsbuildMetaFile> {
+    EsbuildMetaFile::from_str(esbuild_meta_contents)
+}
+
 pub fn initialize_instance(esbuild_meta_contents: &str) {
     let esbuild_metafile = Arc::new(
-        EsbuildMetaFile::from_str(esbuild_meta_contents).expect("Failed to parse ESBuild metafile"),
+        create_from_contents(esbuild_meta_contents)
+            .expect("Unable to create ESBuild metafile instance"),
     );
 
     INSTANCE
