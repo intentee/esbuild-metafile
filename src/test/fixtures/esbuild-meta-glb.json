@@ -1,0 +1,13 @@
+{
+    "outputs": {
+        "dist/model_123.glb": {
+            "imports": [],
+            "exports": [],
+            "inputs": {
+                "resources/media/models/model.glb": {
+                    "bytesInOutput": 123
+                }
+            }
+        }
+    }
+}

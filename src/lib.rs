@@ -15,6 +15,7 @@ use std::collections::HashSet;
 use std::str::FromStr;
 
 use anyhow::Result;
+use anyhow::anyhow;
 pub use http_preloader::HttpPreloader;
 use serde::Deserialize;
 
@@ -108,7 +109,7 @@ impl FromStr for EsbuildMetaFile {
                             }
                         }
                         None => {
-                            return Err(anyhow::anyhow!(
+                            return Err(anyhow!(
                                 "CSS bundle '{}' not found in outputs",
                                 css_bundle
                             ));
@@ -123,6 +124,7 @@ impl FromStr for EsbuildMetaFile {
             } else {
                 // Static files use the same extension as the input file, and no entry point
                 for input_path in output.inputs.keys() {
+                    remaining_outputs.remove(output_path);
                     static_paths
                         .entry(input_path.to_string())
                         .or_default()
@@ -132,7 +134,7 @@ impl FromStr for EsbuildMetaFile {
         }
 
         if !remaining_outputs.is_empty() {
-            return Err(anyhow::anyhow!(
+            return Err(anyhow!(
                 "Some outputs were not processed: {:?}",
                 remaining_outputs
             ));
@@ -156,6 +158,7 @@ mod tests {
     use super::*;
     use crate::test::get_metafile_basic;
     use crate::test::get_metafile_fonts;
+    use crate::test::get_metafile_glb;
     use crate::test::get_metafile_svg;
 
     #[test]
@@ -226,7 +229,20 @@ mod tests {
     }
 
     #[test]
-    fn test_get_file_path() -> Result<()> {
+    fn test_get_file_path_for_glb() -> Result<()> {
+        let metafile = get_metafile_glb()?;
+        let outputs = metafile
+            .find_static_paths_for_input("resources/media/models/model.glb")
+            .unwrap();
+
+        assert_eq!(outputs.len(), 1);
+        assert!(outputs.contains(&"dist/model_123.glb".to_string()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_file_path_for_svg() -> Result<()> {
         let metafile = get_metafile_svg()?;
         let outputs = metafile
             .find_static_paths_for_input("resources/images/image.svg")
