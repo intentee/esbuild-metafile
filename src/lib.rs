@@ -80,15 +80,20 @@ impl EsbuildMetaFile {
     ) -> Result<()> {
         if let Some(output) = metafile.outputs.get(output_path) {
             remaining_outputs.remove(output_path);
-            outputs.push(output_path.to_string());
 
-            Self::register_preloads_from_imports(
-                metafile,
-                outputs,
-                preloads,
-                remaining_outputs,
-                &output.imports,
-            )?;
+            let output_path_str = output_path.to_string();
+
+            if !outputs.contains(&output_path_str) {
+                outputs.push(output_path_str);
+
+                Self::register_preloads_from_imports(
+                    metafile,
+                    outputs,
+                    preloads,
+                    remaining_outputs,
+                    &output.imports,
+                )?;
+            }
         }
 
         Ok(())
@@ -107,7 +112,6 @@ impl EsbuildMetaFile {
         {
             if !preloads.contains(path) {
                 remaining_outputs.remove(path);
-                println!("preload: {}", path);
                 preloads.push(path.clone());
 
                 Self::register_preloads_for_output(
@@ -150,7 +154,6 @@ impl FromStr for EsbuildMetaFile {
             },
         ) in &metafile.outputs
         {
-            println!("output path: {output_path}");
             if let Some(entry_point) = &entry_point {
                 remaining_outputs.remove(output_path);
 
