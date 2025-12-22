@@ -27,7 +27,7 @@ impl PreloadableAsset {
     pub fn render<TRendersPath: RendersPath>(&self, renders_path: &TRendersPath) -> String {
         match self {
             PreloadableAsset::Fetch(path) => format!(
-                "<link rel=\"preload\" href=\"{}\" as=\"fetch\">",
+                "<link rel=\"preload\" href=\"{}\" as=\"fetch\" crossorigin>",
                 renders_path.render_path(path),
             ),
             PreloadableAsset::Font(path) => format!(

@@ -1,5 +1,23 @@
 {
     "outputs": {
+        "dist/chunk-ABC.js": {
+          "imports": [
+            {"path":"dist/model_123.glb"}
+          ]
+        },
+        "dist/chunk-DEF.js": {
+          "imports": [
+            {"path":"dist/model_123.glb"}
+          ]
+        },
+        "dist/main.js": {
+            "imports": [
+                {"path": "dist/chunk-ABC.js"},
+                {"path": "dist/chunk-DEF.js"}
+            ],
+            "entryPoint": "src/main.ts",
+            "inputs": {}
+        },
         "dist/model_123.glb": {
             "imports": [],
             "exports": [],
