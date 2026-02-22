@@ -2,7 +2,7 @@
 description = "Utilities for working with esbuild metafiles"
 name = "esbuild-metafile"
 license = "MIT"
-version = "0.6.3"
+version = "0.6.4"
 edition = "2024"
 
 [dependencies]
@@ -11,6 +11,7 @@ actix-web = "4.11.0"
 anyhow = { version = "1.0.98", features = ["backtrace"] }
 askama = "0.14.0"
 dashmap = "6.1.0"
+log = "0.4"
 once_cell = "1.21.3"
 pretty_assertions = "1"
 serde = { version = "1.0.219", features = ["derive", "rc"] }

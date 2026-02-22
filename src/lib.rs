@@ -15,7 +15,6 @@ use std::collections::HashSet;
 use std::str::FromStr;
 
 use anyhow::Result;
-use anyhow::anyhow;
 pub use http_preloader::HttpPreloader;
 use serde::Deserialize;
 
@@ -192,9 +191,7 @@ impl FromStr for EsbuildMetaFile {
         }
 
         if !remaining_outputs.is_empty() {
-            return Err(anyhow!(
-                "Some outputs were not processed: {remaining_outputs:?}"
-            ));
+            log::warn!("Some outputs were not processed: {remaining_outputs:?}");
         }
 
         Ok(Self {

@@ -520,6 +520,7 @@ dependencies = [
  "askama",
  "dashmap",
  "indoc",
+ "log",
  "once_cell",
  "pretty_assertions",
  "serde",
