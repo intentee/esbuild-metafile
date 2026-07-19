@@ -1,15 +1,22 @@
 use std::sync::Arc;
 
+#[cfg(feature = "actix_web")]
 use actix_utils::future::Ready;
+#[cfg(feature = "actix_web")]
 use actix_utils::future::ok;
+#[cfg(feature = "actix_web")]
 use actix_web::Error;
+#[cfg(feature = "actix_web")]
 use actix_web::FromRequest;
+#[cfg(feature = "actix_web")]
 use actix_web::HttpRequest;
+#[cfg(feature = "actix_web")]
 use actix_web::dev;
 use dashmap::DashSet;
 
 use super::EsbuildMetaFile;
 use super::asset::Asset;
+#[cfg(feature = "actix_web")]
 use super::instance::get_esbuild_metafile;
 use super::preloadable_asset::PreloadableAsset;
 
@@ -65,6 +72,7 @@ impl HttpPreloader {
     }
 }
 
+#[cfg(feature = "actix_web")]
 impl FromRequest for HttpPreloader {
     type Error = Error;
     type Future = Ready<Result<Self, Self::Error>>;

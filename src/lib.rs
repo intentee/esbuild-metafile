@@ -1,5 +1,6 @@
 pub mod asset;
 mod filesystem;
+#[cfg(feature = "askama")]
 pub mod filters;
 pub mod http_preloader;
 pub mod instance;
