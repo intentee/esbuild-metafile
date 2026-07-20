@@ -31,3 +31,33 @@ impl Asset {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::path_renderer::PathRenderer;
+
+    #[test]
+    fn test_script_renders_module_script_tag() {
+        let rendered = Asset::from_path("dist/app.js".to_string()).render(&PathRenderer {});
+
+        assert_eq!(
+            rendered,
+            "<script async src=\"/dist/app.js\" type=\"module\"></script>"
+        );
+    }
+
+    #[test]
+    fn test_stylesheet_renders_stylesheet_link() {
+        let rendered = Asset::from_path("dist/app.css".to_string()).render(&PathRenderer {});
+
+        assert_eq!(rendered, "<link rel=\"stylesheet\" href=\"/dist/app.css\">");
+    }
+
+    #[test]
+    fn test_unknown_renders_empty_string() {
+        let rendered = Asset::from_path("dist/model.bin".to_string()).render(&PathRenderer {});
+
+        assert_eq!(rendered, "");
+    }
+}

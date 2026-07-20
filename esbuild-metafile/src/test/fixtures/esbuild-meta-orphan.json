@@ -1,0 +1,8 @@
+{
+  "outputs": {
+    "dist/orphan.js": {
+      "imports": [],
+      "inputs": {}
+    }
+  }
+}

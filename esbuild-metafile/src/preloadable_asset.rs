@@ -52,33 +52,71 @@ impl PreloadableAsset {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
-
     use super::*;
     use crate::path_renderer::PathRenderer;
 
     #[test]
-    fn test_local_font_formatting() -> Result<()> {
-        let path_renderer = PathRenderer {};
-        let font = PreloadableAsset::Font("fonts/Roboto.woff2".to_string()).render(&path_renderer);
-        let expected =
-            "<link rel=\"preload\" href=\"/fonts/Roboto.woff2\" as=\"font\" crossorigin>";
+    fn test_local_font_formatting() {
+        let font =
+            PreloadableAsset::Font("fonts/Roboto.woff2".to_string()).render(&PathRenderer {});
 
-        assert_eq!(format!("{font}"), expected);
-
-        Ok(())
+        assert_eq!(
+            font,
+            "<link rel=\"preload\" href=\"/fonts/Roboto.woff2\" as=\"font\" crossorigin>"
+        );
     }
 
     #[test]
-    fn test_url_font_formatting() -> Result<()> {
-        let path_renderer = PathRenderer {};
+    fn test_url_font_formatting() {
         let font =
             PreloadableAsset::Font("https://fonts.somewhere.com/fonts/Roboto.woff2".to_string())
-                .render(&path_renderer);
-        let expected = "<link rel=\"preload\" href=\"https://fonts.somewhere.com/fonts/Roboto.woff2\" as=\"font\" crossorigin>";
+                .render(&PathRenderer {});
 
-        assert_eq!(format!("{font}"), expected);
+        assert_eq!(
+            font,
+            "<link rel=\"preload\" href=\"https://fonts.somewhere.com/fonts/Roboto.woff2\" as=\"font\" crossorigin>"
+        );
+    }
 
-        Ok(())
+    #[test]
+    fn test_module_from_path_renders_modulepreload() {
+        let module =
+            PreloadableAsset::from_path("dist/app.js".to_string()).render(&PathRenderer {});
+
+        assert_eq!(module, "<link rel=\"modulepreload\" href=\"/dist/app.js\">");
+    }
+
+    #[test]
+    fn test_stylesheet_from_path_renders_style_preload() {
+        let stylesheet =
+            PreloadableAsset::from_path("dist/app.css".to_string()).render(&PathRenderer {});
+
+        assert_eq!(
+            stylesheet,
+            "<link rel=\"preload\" href=\"/dist/app.css\" as=\"style\">"
+        );
+    }
+
+    #[test]
+    fn test_all_image_extensions_render_image_preload() {
+        for extension in ["png", "jpg", "jpeg", "gif", "webp", "avif", "svg"] {
+            let path = format!("dist/logo.{extension}");
+            let image = PreloadableAsset::from_path(path.clone()).render(&PathRenderer {});
+
+            assert_eq!(
+                image,
+                format!("<link rel=\"preload\" href=\"/{path}\" as=\"image\">")
+            );
+        }
+    }
+
+    #[test]
+    fn test_extensionless_path_renders_fetch_preload() {
+        let fetch = PreloadableAsset::from_path("dist/data".to_string()).render(&PathRenderer {});
+
+        assert_eq!(
+            fetch,
+            "<link rel=\"preload\" href=\"/dist/data\" as=\"fetch\" crossorigin>"
+        );
     }
 }

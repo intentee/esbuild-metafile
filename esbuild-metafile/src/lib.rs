@@ -2,6 +2,7 @@ pub mod asset;
 mod filesystem;
 #[cfg(feature = "askama")]
 pub mod filters;
+#[cfg(feature = "actix_web")]
 pub mod http_preloader;
 pub mod instance;
 pub mod path_renderer;
@@ -16,6 +17,7 @@ use std::collections::HashSet;
 use std::str::FromStr;
 
 use anyhow::Result;
+#[cfg(feature = "actix_web")]
 pub use http_preloader::HttpPreloader;
 use serde::Deserialize;
 
@@ -77,7 +79,7 @@ impl EsbuildMetaFile {
         preloads: &'preloads mut Vec<String>,
         remaining_outputs: &'preloads mut HashSet<String>,
         output_path: &'preloads str,
-    ) -> Result<()> {
+    ) {
         if let Some(output) = metafile.outputs.get(output_path) {
             remaining_outputs.remove(output_path);
 
@@ -92,11 +94,9 @@ impl EsbuildMetaFile {
                     preloads,
                     remaining_outputs,
                     &output.imports,
-                )?;
+                );
             }
         }
-
-        Ok(())
     }
 
     fn register_preloads_from_imports<'preloads>(
@@ -105,7 +105,7 @@ impl EsbuildMetaFile {
         preloads: &'preloads mut Vec<String>,
         remaining_outputs: &'preloads mut HashSet<String>,
         imports: &'preloads [Import],
-    ) -> Result<()> {
+    ) {
         for Import {
             path,
         } in imports
@@ -120,11 +120,9 @@ impl EsbuildMetaFile {
                     preloads,
                     remaining_outputs,
                     path,
-                )?;
+                );
             }
         }
-
-        Ok(())
     }
 }
 
@@ -169,7 +167,7 @@ impl FromStr for EsbuildMetaFile {
                         preloads,
                         &mut remaining_outputs,
                         css_bundle,
-                    )?;
+                    );
                 }
 
                 Self::register_preloads_from_imports(
@@ -178,9 +176,8 @@ impl FromStr for EsbuildMetaFile {
                     preloads,
                     &mut remaining_outputs,
                     imports,
-                )?;
+                );
             } else {
-                // Static files use the same extension as the input file, and no entry point
                 for input_path in inputs.keys() {
                     remaining_outputs.remove(output_path);
                     static_paths
@@ -212,25 +209,25 @@ impl FromStr for EsbuildMetaFile {
 mod tests {
     use super::*;
     use crate::test::get_metafile_basic;
+    use crate::test::get_metafile_dedup;
     use crate::test::get_metafile_fonts;
     use crate::test::get_metafile_glb;
+    use crate::test::get_metafile_orphan;
     use crate::test::get_metafile_svg;
 
     #[test]
-    fn test_get_output_paths() -> Result<()> {
-        let metafile = get_metafile_basic()?;
+    fn test_get_output_paths() {
+        let metafile = get_metafile_basic();
         let outputs = metafile.get_output_paths();
 
         assert_eq!(outputs.len(), 2);
         assert!(outputs.contains("dist/main.css"));
         assert!(outputs.contains("dist/main.js"));
-
-        Ok(())
     }
 
     #[test]
-    fn test_find_outputs_for_css_input() -> Result<()> {
-        let metafile = get_metafile_fonts()?;
+    fn test_find_outputs_for_css_input() {
+        let metafile = get_metafile_fonts();
         let outputs = metafile
             .find_outputs_for_input("resources/css/page-common.css")
             .unwrap();
@@ -238,13 +235,11 @@ mod tests {
         assert_eq!(outputs.len(), 2);
         assert!(outputs.contains(&"static/page-common_DO3RNJ3I.css".to_string()));
         assert!(outputs.contains(&"static/test_6D5OPEBZ.svg".to_string()));
-
-        Ok(())
     }
 
     #[test]
-    fn test_find_outputs_for_tsx_input() -> Result<()> {
-        let metafile = get_metafile_fonts()?;
+    fn test_find_outputs_for_tsx_input() {
+        let metafile = get_metafile_fonts();
         let outputs = metafile
             .find_outputs_for_input("resources/ts/controller_foo.tsx")
             .unwrap();
@@ -252,13 +247,11 @@ mod tests {
         assert_eq!(outputs.len(), 2);
         assert!(outputs.contains(&"static/controller_foo_CTJMZK66.js".to_string()));
         assert!(outputs.contains(&"static/controller_foo_CX2Z63ZH.css".to_string()));
-
-        Ok(())
     }
 
     #[test]
-    fn test_get_preloads_for_js() -> Result<()> {
-        let metafile = get_metafile_fonts()?;
+    fn test_get_preloads_for_js() {
+        let metafile = get_metafile_fonts();
         let preloads = metafile.get_preloads("static/controller_foo_CTJMZK66.js");
 
         assert_eq!(preloads.len(), 5);
@@ -267,26 +260,29 @@ mod tests {
         assert!(preloads.contains(&"static/chunk-EMZKCXNJ.js".to_string()));
         assert!(preloads.contains(&"static/chunk-PI4ZFSEL.js".to_string()));
         assert!(preloads.contains(&"static/logo_XSTJPNLH.png".to_string()));
-
-        Ok(())
     }
 
     #[test]
-    fn test_get_preloads_for_css() -> Result<()> {
-        let metafile = get_metafile_fonts()?;
+    fn test_get_preloads_for_css() {
+        let metafile = get_metafile_fonts();
         let preloads = metafile.get_preloads("static/page-common_DO3RNJ3I.css");
 
         assert_eq!(preloads.len(), 3);
         assert!(preloads.contains(&"https://fonts/font1.woff2".to_string()));
         assert!(preloads.contains(&"https://fonts/font2.woff2".to_string()));
         assert!(preloads.contains(&"static/test_6D5OPEBZ.svg".to_string()));
-
-        Ok(())
     }
 
     #[test]
-    fn test_get_file_path_for_glb() -> Result<()> {
-        let metafile = get_metafile_glb()?;
+    fn test_get_preloads_for_unknown_output_is_empty() {
+        let metafile = get_metafile_basic();
+
+        assert!(metafile.get_preloads("dist/does-not-exist.js").is_empty());
+    }
+
+    #[test]
+    fn test_get_file_path_for_glb() {
+        let metafile = get_metafile_glb();
         let outputs = metafile
             .find_static_paths_for_input("resources/media/models/model.glb")
             .unwrap();
@@ -296,26 +292,54 @@ mod tests {
 
         let preloads = metafile.get_preloads("dist/main.js");
 
-        println!("preloads: {preloads:?}");
-
         assert_eq!(preloads.len(), 3);
         assert!(preloads.contains(&"dist/chunk-ABC.js".to_string()));
         assert!(preloads.contains(&"dist/chunk-DEF.js".to_string()));
         assert!(preloads.contains(&"dist/model_123.glb".to_string()));
-
-        Ok(())
     }
 
     #[test]
-    fn test_get_file_path_for_svg() -> Result<()> {
-        let metafile = get_metafile_svg()?;
+    fn test_get_file_path_for_svg() {
+        let metafile = get_metafile_svg();
         let outputs = metafile
             .find_static_paths_for_input("resources/images/image.svg")
             .unwrap();
 
         assert_eq!(outputs.len(), 1);
         assert!(outputs.contains(&"dist/image_123.svg".to_string()));
+    }
 
-        Ok(())
+    #[test]
+    fn test_orphan_output_is_listed_but_unmapped() {
+        let metafile = get_metafile_orphan();
+
+        assert!(metafile.get_output_paths().contains("dist/orphan.js"));
+        assert!(metafile.find_outputs_for_input("dist/orphan.js").is_none());
+        assert!(
+            metafile
+                .find_static_paths_for_input("dist/orphan.js")
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn test_from_str_rejects_invalid_json() {
+        assert!(EsbuildMetaFile::from_str("not valid json").is_err());
+    }
+
+    #[test]
+    fn test_shared_output_referenced_twice_is_registered_once() {
+        let metafile = get_metafile_dedup();
+        let outputs = metafile.find_outputs_for_input("src/entry.ts").unwrap();
+
+        assert_eq!(outputs.len(), 2);
+        assert_eq!(
+            outputs
+                .iter()
+                .filter(|path| *path == "dist/shared.js")
+                .count(),
+            1
+        );
+        assert!(outputs.contains(&"dist/entry.js".to_string()));
     }
 }

@@ -1,0 +1,16 @@
+{
+  "outputs": {
+    "dist/entry.js": {
+      "imports": [
+        {"path": "dist/shared.js"}
+      ],
+      "cssBundle": "dist/shared.js",
+      "entryPoint": "src/entry.ts",
+      "inputs": {}
+    },
+    "dist/shared.js": {
+      "imports": [],
+      "inputs": {}
+    }
+  }
+}

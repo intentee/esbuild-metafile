@@ -73,7 +73,7 @@ pub fn render_assets(http_preloader: &HttpPreloader, _values: &dyn Values) -> Re
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
+    use askama::NO_VALUES;
     use askama::Template;
     use indoc::indoc;
     use pretty_assertions::assert_eq;
@@ -89,13 +89,13 @@ mod tests {
     }
 
     #[test]
-    fn test_asset_filter() -> Result<()> {
-        let preloads = HttpPreloader::new(get_metafile_fonts()?);
+    fn test_asset_filter() {
+        let preloads = HttpPreloader::new(get_metafile_fonts());
         let template = WorkbenchTemplate {
             preloads,
         };
 
-        let rendered = template.render()?;
+        let rendered = template.render().expect("template renders");
 
         assert_eq!(
             rendered.trim(),
@@ -110,7 +110,27 @@ mod tests {
             "#}
             .trim()
         );
+    }
 
-        Ok(())
+    #[test]
+    fn test_asset_filter_errors_for_unknown_input() {
+        let preloader = HttpPreloader::new(get_metafile_fonts());
+
+        assert!(asset("resources/ts/unknown.tsx", NO_VALUES, &preloader).is_err());
+    }
+
+    #[test]
+    fn test_preload_filter_registers_known_input() {
+        let preloader = HttpPreloader::new(get_metafile_fonts());
+
+        assert!(preload("resources/ts/controller_foo.tsx", NO_VALUES, &preloader).is_ok());
+        assert!(!preloader.preloads.is_empty());
+    }
+
+    #[test]
+    fn test_preload_filter_errors_for_unknown_input() {
+        let preloader = HttpPreloader::new(get_metafile_fonts());
+
+        assert!(preload("resources/ts/unknown.tsx", NO_VALUES, &preloader).is_err());
     }
 }

@@ -1,22 +1,15 @@
 use std::sync::Arc;
 
-#[cfg(feature = "actix_web")]
 use actix_utils::future::Ready;
-#[cfg(feature = "actix_web")]
 use actix_utils::future::ok;
-#[cfg(feature = "actix_web")]
 use actix_web::Error;
-#[cfg(feature = "actix_web")]
 use actix_web::FromRequest;
-#[cfg(feature = "actix_web")]
 use actix_web::HttpRequest;
-#[cfg(feature = "actix_web")]
 use actix_web::dev;
 use dashmap::DashSet;
 
 use super::EsbuildMetaFile;
 use super::asset::Asset;
-#[cfg(feature = "actix_web")]
 use super::instance::get_esbuild_metafile;
 use super::preloadable_asset::PreloadableAsset;
 
@@ -72,7 +65,6 @@ impl HttpPreloader {
     }
 }
 
-#[cfg(feature = "actix_web")]
 impl FromRequest for HttpPreloader {
     type Error = Error;
     type Future = Ready<Result<Self, Self::Error>>;
@@ -84,14 +76,12 @@ impl FromRequest for HttpPreloader {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
-
     use super::*;
     use crate::test::get_metafile_basic;
 
     #[test]
-    fn test_unique_includes_and_preloads() -> Result<()> {
-        let metafile = get_metafile_basic()?;
+    fn test_unique_includes_and_preloads() {
+        let metafile = get_metafile_basic();
         let preloader = HttpPreloader::new(metafile);
 
         preloader.register_input("src/main.ts");
@@ -109,13 +99,11 @@ mod tests {
         assert!(preloads.contains(&PreloadableAsset::from_path("dist/chunk1.js".to_string())));
         assert!(preloads.contains(&PreloadableAsset::from_path("dist/chunk2.js".to_string())));
         assert!(preloads.contains(&PreloadableAsset::from_path("dist/style1.css".to_string())));
-
-        Ok(())
     }
 
     #[test]
-    fn test_css_preloads_uniqueness() -> Result<()> {
-        let metafile = get_metafile_basic()?;
+    fn test_css_preloads_uniqueness() {
+        let metafile = get_metafile_basic();
         let preloader = HttpPreloader::new(metafile);
 
         preloader.register_input("src/style.css");
@@ -124,7 +112,53 @@ mod tests {
 
         assert_eq!(preloads.len(), 1);
         assert!(preloads.contains(&PreloadableAsset::from_path("dist/style1.css".to_string())));
+    }
 
-        Ok(())
+    #[test]
+    fn test_register_input_returns_none_for_unknown_input() {
+        let preloader = HttpPreloader::new(get_metafile_basic());
+
+        assert!(preloader.register_input("src/unknown.ts").is_none());
+        assert!(preloader.includes.is_empty());
+        assert!(preloader.preloads.is_empty());
+    }
+
+    #[test]
+    fn test_register_preload_registers_mapped_outputs_and_their_preloads() {
+        let preloader = HttpPreloader::new(get_metafile_basic());
+
+        assert!(preloader.register_preload("src/main.ts").is_some());
+
+        let preloads = &preloader.preloads;
+
+        assert_eq!(preloads.len(), 5);
+        assert!(preloads.contains(&PreloadableAsset::from_path("dist/main.js".to_string())));
+        assert!(preloads.contains(&PreloadableAsset::from_path("dist/main.css".to_string())));
+        assert!(preloads.contains(&PreloadableAsset::from_path("dist/style1.css".to_string())));
+        assert!(preloads.contains(&PreloadableAsset::from_path("dist/chunk1.js".to_string())));
+        assert!(preloads.contains(&PreloadableAsset::from_path("dist/chunk2.js".to_string())));
+    }
+
+    #[test]
+    fn test_register_preload_returns_none_for_unknown_input() {
+        let preloader = HttpPreloader::new(get_metafile_basic());
+
+        assert!(preloader.register_preload("src/unknown.ts").is_none());
+        assert!(preloader.preloads.is_empty());
+    }
+
+    #[test]
+    fn test_from_request_builds_preloader_from_global_instance() {
+        use actix_web::FromRequest;
+        use actix_web::dev::Payload;
+        use actix_web::test::TestRequest;
+
+        crate::instance::initialize_instance("{\"outputs\":{}}");
+
+        let request = TestRequest::default().to_http_request();
+        let mut payload = Payload::None;
+        let preloader = HttpPreloader::from_request(&request, &mut payload).into_inner();
+
+        assert!(preloader.is_ok());
     }
 }
