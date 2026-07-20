@@ -4,7 +4,11 @@ use std::str::FromStr;
 
 use crate::error::Error;
 use crate::import::Import;
+use crate::input_lookup::InputLookup;
+use crate::input_properties::InputProperties;
 use crate::output::Output;
+use crate::output_lookup::OutputLookup;
+use crate::output_properties::OutputProperties;
 use crate::raw_esbuild_metafile::RawEsbuildMetafile;
 
 fn register_preloads_for_output<'preloads>(
@@ -62,23 +66,35 @@ pub struct EsbuildMetafile {
 }
 
 impl EsbuildMetafile {
-    pub fn find_static_paths_for_input(&self, input_path: &str) -> Option<Vec<String>> {
-        self.static_paths.get(input_path).cloned()
+    pub fn input(&self, input_path: &str) -> InputLookup {
+        let outputs = self.input_to_outputs.get(input_path).cloned();
+        let static_paths = self.static_paths.get(input_path).cloned();
+
+        match (outputs, static_paths) {
+            (None, None) => InputLookup::NotFound,
+            (outputs, static_paths) => InputLookup::Found(InputProperties {
+                outputs: outputs.unwrap_or_default(),
+                static_paths: static_paths.unwrap_or_default(),
+            }),
+        }
     }
 
-    pub fn find_outputs_for_input(&self, input_path: &str) -> Option<Vec<String>> {
-        self.input_to_outputs.get(input_path).cloned()
+    pub fn output(&self, output_path: &str) -> OutputLookup {
+        if self.output_paths.contains(output_path) {
+            OutputLookup::Found(OutputProperties {
+                preloads: self
+                    .output_to_preloads
+                    .get(output_path)
+                    .cloned()
+                    .unwrap_or_default(),
+            })
+        } else {
+            OutputLookup::NotFound
+        }
     }
 
     pub fn get_output_paths(&self) -> HashSet<String> {
         self.output_paths.clone()
-    }
-
-    pub fn get_preloads(&self, output_path: &str) -> Vec<String> {
-        self.output_to_preloads
-            .get(output_path)
-            .cloned()
-            .unwrap_or_default()
     }
 }
 
@@ -176,6 +192,20 @@ mod tests {
     use crate::test::get_metafile_orphan;
     use crate::test::get_metafile_svg;
 
+    fn found_input(lookup: InputLookup) -> Option<InputProperties> {
+        match lookup {
+            InputLookup::Found(input) => Some(input),
+            InputLookup::NotFound => None,
+        }
+    }
+
+    fn found_output(lookup: OutputLookup) -> Option<OutputProperties> {
+        match lookup {
+            OutputLookup::Found(output) => Some(output),
+            OutputLookup::NotFound => None,
+        }
+    }
+
     #[test]
     fn test_get_output_paths() {
         let metafile = get_metafile_basic();
@@ -187,87 +217,142 @@ mod tests {
     }
 
     #[test]
-    fn test_find_outputs_for_css_input() {
+    fn test_input_returns_outputs_for_css_input() {
         let metafile = get_metafile_fonts();
-        let outputs = metafile
-            .find_outputs_for_input("resources/css/page-common.css")
-            .unwrap();
+        let input = found_input(metafile.input("resources/css/page-common.css"))
+            .expect("expected input to be found");
 
-        assert_eq!(outputs.len(), 2);
-        assert!(outputs.contains(&"static/page-common_DO3RNJ3I.css".to_string()));
-        assert!(outputs.contains(&"static/test_6D5OPEBZ.svg".to_string()));
+        assert_eq!(input.outputs.len(), 2);
+        assert!(
+            input
+                .outputs
+                .contains(&"static/page-common_DO3RNJ3I.css".to_string())
+        );
+        assert!(
+            input
+                .outputs
+                .contains(&"static/test_6D5OPEBZ.svg".to_string())
+        );
     }
 
     #[test]
-    fn test_find_outputs_for_tsx_input() {
+    fn test_input_returns_outputs_for_tsx_input() {
         let metafile = get_metafile_fonts();
-        let outputs = metafile
-            .find_outputs_for_input("resources/ts/controller_foo.tsx")
-            .unwrap();
+        let input = found_input(metafile.input("resources/ts/controller_foo.tsx"))
+            .expect("expected input to be found");
 
-        assert_eq!(outputs.len(), 2);
-        assert!(outputs.contains(&"static/controller_foo_CTJMZK66.js".to_string()));
-        assert!(outputs.contains(&"static/controller_foo_CX2Z63ZH.css".to_string()));
+        assert_eq!(input.outputs.len(), 2);
+        assert!(
+            input
+                .outputs
+                .contains(&"static/controller_foo_CTJMZK66.js".to_string())
+        );
+        assert!(
+            input
+                .outputs
+                .contains(&"static/controller_foo_CX2Z63ZH.css".to_string())
+        );
     }
 
     #[test]
-    fn test_get_preloads_for_js() {
+    fn test_output_returns_preloads_for_js() {
         let metafile = get_metafile_fonts();
-        let preloads = metafile.get_preloads("static/controller_foo_CTJMZK66.js");
+        let output = found_output(metafile.output("static/controller_foo_CTJMZK66.js"))
+            .expect("expected output to be found");
 
-        assert_eq!(preloads.len(), 5);
-        assert!(preloads.contains(&"https://fonts/font1.woff2".to_string()));
-        assert!(preloads.contains(&"https://fonts/font3.woff2".to_string()));
-        assert!(preloads.contains(&"static/chunk-EMZKCXNJ.js".to_string()));
-        assert!(preloads.contains(&"static/chunk-PI4ZFSEL.js".to_string()));
-        assert!(preloads.contains(&"static/logo_XSTJPNLH.png".to_string()));
+        assert_eq!(output.preloads.len(), 5);
+        assert!(
+            output
+                .preloads
+                .contains(&"https://fonts/font1.woff2".to_string())
+        );
+        assert!(
+            output
+                .preloads
+                .contains(&"https://fonts/font3.woff2".to_string())
+        );
+        assert!(
+            output
+                .preloads
+                .contains(&"static/chunk-EMZKCXNJ.js".to_string())
+        );
+        assert!(
+            output
+                .preloads
+                .contains(&"static/chunk-PI4ZFSEL.js".to_string())
+        );
+        assert!(
+            output
+                .preloads
+                .contains(&"static/logo_XSTJPNLH.png".to_string())
+        );
     }
 
     #[test]
-    fn test_get_preloads_for_css() {
+    fn test_output_returns_preloads_for_css() {
         let metafile = get_metafile_fonts();
-        let preloads = metafile.get_preloads("static/page-common_DO3RNJ3I.css");
+        let output = found_output(metafile.output("static/page-common_DO3RNJ3I.css"))
+            .expect("expected output to be found");
 
-        assert_eq!(preloads.len(), 3);
-        assert!(preloads.contains(&"https://fonts/font1.woff2".to_string()));
-        assert!(preloads.contains(&"https://fonts/font2.woff2".to_string()));
-        assert!(preloads.contains(&"static/test_6D5OPEBZ.svg".to_string()));
+        assert_eq!(output.preloads.len(), 3);
+        assert!(
+            output
+                .preloads
+                .contains(&"https://fonts/font1.woff2".to_string())
+        );
+        assert!(
+            output
+                .preloads
+                .contains(&"https://fonts/font2.woff2".to_string())
+        );
+        assert!(
+            output
+                .preloads
+                .contains(&"static/test_6D5OPEBZ.svg".to_string())
+        );
     }
 
     #[test]
-    fn test_get_preloads_for_unknown_output_is_empty() {
+    fn test_output_is_not_found_for_unknown_output() {
         let metafile = get_metafile_basic();
 
-        assert!(metafile.get_preloads("dist/does-not-exist.js").is_empty());
+        assert!(found_output(metafile.output("dist/does-not-exist.js")).is_none());
     }
 
     #[test]
-    fn test_get_file_path_for_glb() {
+    fn test_input_returns_static_paths_for_glb() {
         let metafile = get_metafile_glb();
-        let outputs = metafile
-            .find_static_paths_for_input("resources/media/models/model.glb")
-            .unwrap();
+        let input = found_input(metafile.input("resources/media/models/model.glb"))
+            .expect("expected input to be found");
 
-        assert_eq!(outputs.len(), 1);
-        assert!(outputs.contains(&"dist/model_123.glb".to_string()));
+        assert_eq!(input.static_paths.len(), 1);
+        assert!(
+            input
+                .static_paths
+                .contains(&"dist/model_123.glb".to_string())
+        );
 
-        let preloads = metafile.get_preloads("dist/main.js");
+        let output =
+            found_output(metafile.output("dist/main.js")).expect("expected output to be found");
 
-        assert_eq!(preloads.len(), 3);
-        assert!(preloads.contains(&"dist/chunk-ABC.js".to_string()));
-        assert!(preloads.contains(&"dist/chunk-DEF.js".to_string()));
-        assert!(preloads.contains(&"dist/model_123.glb".to_string()));
+        assert_eq!(output.preloads.len(), 3);
+        assert!(output.preloads.contains(&"dist/chunk-ABC.js".to_string()));
+        assert!(output.preloads.contains(&"dist/chunk-DEF.js".to_string()));
+        assert!(output.preloads.contains(&"dist/model_123.glb".to_string()));
     }
 
     #[test]
-    fn test_get_file_path_for_svg() {
+    fn test_input_returns_static_paths_for_svg() {
         let metafile = get_metafile_svg();
-        let outputs = metafile
-            .find_static_paths_for_input("resources/images/image.svg")
-            .unwrap();
+        let input = found_input(metafile.input("resources/images/image.svg"))
+            .expect("expected input to be found");
 
-        assert_eq!(outputs.len(), 1);
-        assert!(outputs.contains(&"dist/image_123.svg".to_string()));
+        assert_eq!(input.static_paths.len(), 1);
+        assert!(
+            input
+                .static_paths
+                .contains(&"dist/image_123.svg".to_string())
+        );
     }
 
     #[test]
@@ -275,12 +360,7 @@ mod tests {
         let metafile = get_metafile_orphan();
 
         assert!(metafile.get_output_paths().contains("dist/orphan.js"));
-        assert!(metafile.find_outputs_for_input("dist/orphan.js").is_none());
-        assert!(
-            metafile
-                .find_static_paths_for_input("dist/orphan.js")
-                .is_none()
-        );
+        assert!(found_input(metafile.input("dist/orphan.js")).is_none());
     }
 
     #[test]
@@ -295,16 +375,18 @@ mod tests {
     #[test]
     fn test_shared_output_referenced_twice_is_registered_once() {
         let metafile = get_metafile_dedup();
-        let outputs = metafile.find_outputs_for_input("src/entry.ts").unwrap();
+        let input =
+            found_input(metafile.input("src/entry.ts")).expect("expected input to be found");
 
-        assert_eq!(outputs.len(), 2);
+        assert_eq!(input.outputs.len(), 2);
         assert_eq!(
-            outputs
+            input
+                .outputs
                 .iter()
                 .filter(|path| *path == "dist/shared.js")
                 .count(),
             1
         );
-        assert!(outputs.contains(&"dist/entry.js".to_string()));
+        assert!(input.outputs.contains(&"dist/entry.js".to_string()));
     }
 }

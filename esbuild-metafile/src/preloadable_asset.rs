@@ -56,9 +56,9 @@ mod tests {
     use crate::path_renderer::PathRenderer;
 
     #[test]
-    fn test_local_font_formatting() {
+    fn test_font_from_path_renders_font_preload() {
         let font =
-            PreloadableAsset::Font("fonts/Roboto.woff2".to_string()).render(&PathRenderer {});
+            PreloadableAsset::from_path("fonts/Roboto.woff2".to_string()).render(&PathRenderer {});
 
         assert_eq!(
             font,
