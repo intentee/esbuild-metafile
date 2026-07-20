@@ -1,43 +1,8 @@
-use std::fmt::Display;
-use std::io;
-
 use askama::Result;
 use askama::Values;
 
-use super::http_preloader::HttpPreloader;
-use super::path_renderer::PathRenderer;
-
-pub fn asset<TDisplay>(
-    input_path: TDisplay,
-    _values: &dyn Values,
-    http_preloader: &HttpPreloader,
-) -> Result<String>
-where
-    TDisplay: Display,
-{
-    match http_preloader.register_input(&input_path.to_string()) {
-        Some(_) => Ok(String::new()),
-        None => Err(askama::Error::Custom(Box::new(io::Error::other(format!(
-            "esbuild input path not found: {input_path}"
-        ))))),
-    }
-}
-
-pub fn preload<TDisplay>(
-    preload_path: TDisplay,
-    _values: &dyn Values,
-    http_preloader: &HttpPreloader,
-) -> Result<String>
-where
-    TDisplay: Display,
-{
-    match http_preloader.register_preload(&preload_path.to_string()) {
-        Some(_) => Ok(String::new()),
-        None => Err(askama::Error::Custom(Box::new(io::Error::other(format!(
-            "esbuild preload path not found: {preload_path}"
-        ))))),
-    }
-}
+use crate::http_preloader::HttpPreloader;
+use crate::path_renderer::PathRenderer;
 
 /// Keeps rendered assets sorted for the sake of browser/proxy caching.
 pub fn render_assets(http_preloader: &HttpPreloader, _values: &dyn Values) -> Result<String> {
@@ -73,7 +38,6 @@ pub fn render_assets(http_preloader: &HttpPreloader, _values: &dyn Values) -> Re
 
 #[cfg(test)]
 mod tests {
-    use askama::NO_VALUES;
     use askama::Template;
     use indoc::indoc;
     use pretty_assertions::assert_eq;
@@ -110,27 +74,5 @@ mod tests {
             "#}
             .trim()
         );
-    }
-
-    #[test]
-    fn test_asset_filter_errors_for_unknown_input() {
-        let preloader = HttpPreloader::new(get_metafile_fonts());
-
-        assert!(asset("resources/ts/unknown.tsx", NO_VALUES, &preloader).is_err());
-    }
-
-    #[test]
-    fn test_preload_filter_registers_known_input() {
-        let preloader = HttpPreloader::new(get_metafile_fonts());
-
-        assert!(preload("resources/ts/controller_foo.tsx", NO_VALUES, &preloader).is_ok());
-        assert!(!preloader.preloads.is_empty());
-    }
-
-    #[test]
-    fn test_preload_filter_errors_for_unknown_input() {
-        let preloader = HttpPreloader::new(get_metafile_fonts());
-
-        assert!(preload("resources/ts/unknown.tsx", NO_VALUES, &preloader).is_err());
     }
 }

@@ -8,8 +8,8 @@ use actix_web::HttpRequest;
 use actix_web::dev;
 use dashmap::DashSet;
 
-use super::EsbuildMetaFile;
 use super::asset::Asset;
+use super::esbuild_metafile::EsbuildMetafile;
 use super::instance::get_esbuild_metafile;
 use super::preloadable_asset::PreloadableAsset;
 
@@ -17,11 +17,11 @@ pub struct HttpPreloader {
     pub includes: DashSet<Asset>,
     pub preloads: DashSet<PreloadableAsset>,
 
-    esbuild_metafile: Arc<EsbuildMetaFile>,
+    esbuild_metafile: Arc<EsbuildMetafile>,
 }
 
 impl HttpPreloader {
-    pub fn new(esbuild_metafile: Arc<EsbuildMetaFile>) -> Self {
+    pub fn new(esbuild_metafile: Arc<EsbuildMetafile>) -> Self {
         Self {
             esbuild_metafile,
             includes: DashSet::new(),

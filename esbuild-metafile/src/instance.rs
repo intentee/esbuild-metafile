@@ -1,15 +1,15 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use anyhow::Result;
 use once_cell::sync::OnceCell;
 
-use super::EsbuildMetaFile;
+use crate::error::Error;
+use crate::esbuild_metafile::EsbuildMetafile;
 
-pub static INSTANCE: OnceCell<Arc<EsbuildMetaFile>> = OnceCell::new();
+static INSTANCE: OnceCell<Arc<EsbuildMetafile>> = OnceCell::new();
 
-pub fn create_from_contents(esbuild_meta_contents: &str) -> Result<EsbuildMetaFile> {
-    EsbuildMetaFile::from_str(esbuild_meta_contents)
+pub fn create_from_contents(esbuild_meta_contents: &str) -> Result<EsbuildMetafile, Error> {
+    EsbuildMetafile::from_str(esbuild_meta_contents)
 }
 
 pub fn initialize_instance(esbuild_meta_contents: &str) {
@@ -23,7 +23,7 @@ pub fn initialize_instance(esbuild_meta_contents: &str) {
         .expect("Failed to set ESBuild metafile instance");
 }
 
-pub fn get_esbuild_metafile() -> Arc<EsbuildMetaFile> {
+pub fn get_esbuild_metafile() -> Arc<EsbuildMetafile> {
     INSTANCE
         .get()
         .expect("ESBuild metafile instance not initialized")
