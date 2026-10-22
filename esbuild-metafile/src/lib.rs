@@ -13,6 +13,3 @@ pub mod path_renderer;
 pub mod preloadable_asset;
 pub mod raw_esbuild_metafile;
 pub mod renders_path;
-
-#[cfg(test)]
-mod test;

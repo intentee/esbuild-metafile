@@ -13,6 +13,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "esbuild-metafile-tests"
+version = "0.1.0"
+dependencies = [
+ "esbuild-metafile",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"

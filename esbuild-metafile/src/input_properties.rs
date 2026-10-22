@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct InputProperties {
     pub outputs: Vec<String>,
     pub preloads: Vec<String>,

@@ -17,6 +17,12 @@
       "inputs": {}
     },
     "dist/chunk-shared.js": {
+      "imports": [
+        {"path": "dist/chunk-deep.js"}
+      ],
+      "inputs": {}
+    },
+    "dist/chunk-deep.js": {
       "imports": [],
       "inputs": {}
     },

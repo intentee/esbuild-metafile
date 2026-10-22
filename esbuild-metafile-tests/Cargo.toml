@@ -1,0 +1,13 @@
+[package]
+name = "esbuild-metafile-tests"
+version = "0.1.0"
+edition = "2024"
+publish = false
+autotests = false
+
+[dev-dependencies]
+esbuild-metafile = { workspace = true }
+
+[[test]]
+name = "integration"
+path = "tests/main.rs"
