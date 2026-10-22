@@ -1,0 +1,38 @@
+{
+  "outputs": {
+    "dist/app.js": {
+      "imports": [
+        {"path": "dist/chunk-shared.js"},
+        {"path": "dist/chunk-app.js"}
+      ],
+      "entryPoint": "src/app.ts",
+      "inputs": {}
+    },
+    "dist/app-legacy.js": {
+      "imports": [
+        {"path": "dist/chunk-shared.js"},
+        {"path": "dist/chunk-legacy.js"}
+      ],
+      "entryPoint": "src/app.ts",
+      "inputs": {}
+    },
+    "dist/chunk-shared.js": {
+      "imports": [
+        {"path": "dist/chunk-deep.js"}
+      ],
+      "inputs": {}
+    },
+    "dist/chunk-deep.js": {
+      "imports": [],
+      "inputs": {}
+    },
+    "dist/chunk-app.js": {
+      "imports": [],
+      "inputs": {}
+    },
+    "dist/chunk-legacy.js": {
+      "imports": [],
+      "inputs": {}
+    }
+  }
+}
