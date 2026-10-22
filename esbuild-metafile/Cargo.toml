@@ -2,7 +2,7 @@
 description = "Utilities for working with esbuild metafiles"
 name = "esbuild-metafile"
 license = "MIT"
-version = "0.10.1"
+version = "0.11.0"
 edition = "2024"
 repository = "https://github.com/intentee/esbuild-metafile"
 
