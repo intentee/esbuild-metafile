@@ -8,6 +8,8 @@ const ESBUILD_CONTENTS_DEDUP: &str = include_str!("./fixtures/esbuild-meta-dedup
 const ESBUILD_CONTENTS_FONTS: &str = include_str!("./fixtures/esbuild-meta-fonts.json");
 const ESBUILD_CONTENTS_GLB: &str = include_str!("./fixtures/esbuild-meta-glb.json");
 const ESBUILD_CONTENTS_ORPHAN: &str = include_str!("./fixtures/esbuild-meta-orphan.json");
+const ESBUILD_CONTENTS_SHARED_ENTRY_POINT: &str =
+    include_str!("./fixtures/esbuild-meta-shared-entry-point.json");
 const ESBUILD_CONTENTS_SVG: &str = include_str!("./fixtures/esbuild-meta-svg.json");
 
 pub fn get_metafile_basic() -> Arc<EsbuildMetafile> {
@@ -28,6 +30,13 @@ pub fn get_metafile_glb() -> Arc<EsbuildMetafile> {
 
 pub fn get_metafile_orphan() -> Arc<EsbuildMetafile> {
     Arc::new(EsbuildMetafile::from_str(ESBUILD_CONTENTS_ORPHAN).expect("orphan fixture parses"))
+}
+
+pub fn get_metafile_shared_entry_point() -> Arc<EsbuildMetafile> {
+    Arc::new(
+        EsbuildMetafile::from_str(ESBUILD_CONTENTS_SHARED_ENTRY_POINT)
+            .expect("shared entry point fixture parses"),
+    )
 }
 
 pub fn get_metafile_svg() -> Arc<EsbuildMetafile> {

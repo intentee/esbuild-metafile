@@ -72,10 +72,15 @@ impl EsbuildMetafile {
 
         match (outputs, static_paths) {
             (None, None) => InputLookup::NotFound,
-            (outputs, static_paths) => InputLookup::Found(InputProperties {
-                outputs: outputs.unwrap_or_default(),
-                static_paths: static_paths.unwrap_or_default(),
-            }),
+            (outputs, static_paths) => {
+                let outputs = outputs.unwrap_or_default();
+
+                InputLookup::Found(InputProperties {
+                    preloads: self.preloads_of_outputs(&outputs),
+                    outputs,
+                    static_paths: static_paths.unwrap_or_default(),
+                })
+            }
         }
     }
 
@@ -95,6 +100,22 @@ impl EsbuildMetafile {
 
     pub fn get_output_paths(&self) -> HashSet<String> {
         self.output_paths.clone()
+    }
+
+    fn preloads_of_outputs(&self, output_paths: &[String]) -> Vec<String> {
+        let mut preloads: Vec<String> = Vec::new();
+
+        for preload in output_paths
+            .iter()
+            .filter_map(|output_path| self.output_to_preloads.get(output_path))
+            .flatten()
+        {
+            if !preloads.contains(preload) {
+                preloads.push(preload.clone());
+            }
+        }
+
+        preloads
     }
 }
 
@@ -190,6 +211,7 @@ mod tests {
     use crate::test::get_metafile_fonts;
     use crate::test::get_metafile_glb;
     use crate::test::get_metafile_orphan;
+    use crate::test::get_metafile_shared_entry_point;
     use crate::test::get_metafile_svg;
 
     fn found_input(lookup: InputLookup) -> Option<InputProperties> {
@@ -317,6 +339,21 @@ mod tests {
         let metafile = get_metafile_basic();
 
         assert!(found_output(metafile.output("dist/does-not-exist.js")).is_none());
+    }
+
+    #[test]
+    fn test_input_merges_the_preloads_of_its_outputs_without_duplicates() {
+        let metafile = get_metafile_shared_entry_point();
+        let mut preloads = found_input(metafile.input("src/app.ts"))
+            .expect("expected input to be found")
+            .preloads;
+
+        preloads.sort();
+
+        assert_eq!(
+            preloads,
+            vec!["dist/chunk-app.js", "dist/chunk-legacy.js", "dist/chunk-shared.js"]
+        );
     }
 
     #[test]
